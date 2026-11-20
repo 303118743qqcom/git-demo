@@ -20,13 +20,15 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK components
+      - name: Prepare Android SDK
         run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          SDKMGR=$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' -type f | head -n1)
+          echo "sdkmanager: $SDKMGR"
+          yes | "$SDKMGR" --licenses > /dev/null 2>&1 || true
+          "$SDKMGR" "platforms;android-35" "build-tools;35.0.0" || true
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          "$SDKMGR" --list_installed | grep -E "platforms;android-35|build-tools;35.0.0" || true
 
       - name: Set up Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
@@ -36,6 +38,7 @@ jobs:
       - name: Generate local.properties
         run: |
           cat > local.properties <<EOF
+          sdk.dir=/usr/local/lib/android/sdk
           meituan.lbs.key=${{ secrets.MEITUAN_LBS_KEY }}
           deals.bridge.url=${{ secrets.DEALS_BRIDGE_URL }}
           enable.demo.data=false
