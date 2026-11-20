@@ -1,0 +1,17 @@
+# 复制为 local.properties 后填写。该文件已被 .gitignore 排除，切勿提交密钥。
+
+# 美团地图开放平台 -> 应用管理 -> 申请「Web服务API」类型 Key
+meituan.lbs.key=
+
+# 自建优惠桥接服务地址（由你的后端持有美团授权凭证并调用官方 API）
+# 示例：https://deals.example.com/api/
+deals.bridge.url=
+
+# 仅在本地演示时置 true；正式包必须保持 false
+enable.demo.data=false
+
+# 正式包签名（可选，留空则输出未签名 APK）
+release.keystore.file=
+release.keystore.password=
+release.key.alias=
+release.key.password=

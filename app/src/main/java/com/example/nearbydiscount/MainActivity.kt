@@ -1,0 +1,50 @@
+package com.example.nearbydiscount
+
+import android.Manifest
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.nearbydiscount.data.location.AppLocationManager
+import com.example.nearbydiscount.ui.NearbyScreen
+import com.example.nearbydiscount.ui.NearbyViewModel
+import com.example.nearbydiscount.ui.NearbyViewModelFactory
+
+class MainActivity : ComponentActivity() {
+
+    private val locationManager by lazy { AppLocationManager(applicationContext) }
+    private var viewModel: NearbyViewModel? = null
+
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> viewModel?.onPermissionResult(granted) }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            val factory = remember { NearbyViewModelFactory(applicationContext) }
+            val vm: NearbyViewModel = viewModel(factory = factory)
+            viewModel = vm
+            val state by vm.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) {
+                if (locationManager.hasPermission()) vm.onPermissionResult(true)
+                else permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+
+            NearbyScreen(
+                state = state,
+                onRadiusSelected = vm::onRadiusSelected,
+                onKeywordChange = vm::onKeywordChange,
+                onSearch = vm::onSearch,
+                onRefresh = vm::onRefresh,
+                onRequestPermission = { permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }
+            )
+        }
+    }
+}

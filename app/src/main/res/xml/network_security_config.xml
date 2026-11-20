@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  合规说明：
+  1. 禁止明文流量，所有请求必须走 HTTPS。
+  2. 仅信任系统证书，不信任用户安装的 CA，从系统层面阻断常见的代理抓包（MITM）方式。
+  3. 正式发布前，建议在 release 源集的同名文件中为 lbsapi.meituan.com 与自建桥接域名
+     增加 <pin-set> 证书锁定（详见 README）。切勿写入无效 pin，否则正式包将全部请求失败。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
