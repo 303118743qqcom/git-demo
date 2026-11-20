@@ -95,6 +95,16 @@
 - 没配置 Secrets 也能构建成功，但 App 启动时会提示「尚未配置官方 Key」并拒绝请求；这是刻意的合规拦截，不是构建失败。
 - debug APK 使用仓库内固定的调试签名（`signing/debug.keystore`，SHA1 见上节），确保高德 Key 绑定长期有效；正式分发需配置 release 签名后改用 `:app:assembleRelease`。
 
+### 演示包（无需任何 Key 即可看效果）
+
+仓库 Actions 已提供 `demo` 开关：进入 Actions → `Build Android APK` → **Run workflow**，勾选 **构建演示包** 后运行，产物名为 `nearby-demo-apk`。演示包内置：
+
+- 8 家样本商家（带真实经纬度偏移，固定在北京国贸坐标），切换 1/2/3/5 km 会真实改变列表数量；
+- 每家商家含有效优惠 + 已过期/已下线/售罄样本，用于展示自动过滤效果；
+- 无需定位权限、无需美团/高德 Key、无需网络，打开即显示列表；顶部有「演示数据」横幅标识。
+
+演示数据仅在 debug 包且 `enable.demo.data=true` 时启用，正式包无论怎么配置都不会生效。本地构建演示包：`local.properties` 设 `enable.demo.data=true` 后 `:app:assembleDebug`。
+
 ## 快速开始
 
 1. 安装 Android Studio（Ladybug 或更新）、JDK 17、Android SDK 35。
