@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="surface">#FFF7F8FA</color>
-    <color name="brand">FFD70A2A</color>
-    <color name="launcher_background">FFD70A2A</color>
+    <color name="brand">#FFD70A2A</color>
+    <color name="launcher_background">#FFD70A2A</color>
 </resources>
