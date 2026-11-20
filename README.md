@@ -48,6 +48,25 @@
 - 高德 SDK 使用**自己的网络栈**请求其官方域名，不受本工程 OkHttp 域名白名单拦截器的约束；但它同样是官方授权 SDK，且工程全局 `network_security_config` 仍强制 HTTPS、仅信任系统证书，可阻断常规代理抓包。
 - 未配置高德 Key 时，地图选点页会提示并安全退出，主界面 GPS 检索不受影响。
 
+## 申请高德 Key（地图选点用，参数已固定）
+
+地图选点需要在[高德开放平台控制台](https://console.amap.com/)申请一个 Android Key。由于 debug 签名已固定在仓库的 `signing/debug.keystore`，下面三个参数**永久不变**，直接填写即可：
+
+| 字段 | 填写值 |
+| --- | --- |
+| 服务平台 | Android 平台 |
+| PackageName（包名） | `com.example.nearbydiscount.debug` |
+| 调试版安全码 SHA1 | `E9:9D:A9:36:17:16:CE:04:E6:DC:0C:37:D0:06:2D:46:DE:5B:5D:66` |
+| 发布版安全码 SHA1 | 同上（当前仅有 debug 包；正式发布换成 release 证书后需重新申请） |
+
+步骤：控制台 → 应用管理 → 创建新应用 → 添加 Key → 服务平台选「Android 平台」→ 填入上表包名与 SHA1 → 提交，复制生成的 Key。
+
+拿到 Key 后二选一：
+- **云端出包**：在仓库 **Settings → Secrets and variables → Actions** 添加 Secret `AMAP_KEY`，值为刚才的 Key，再重新运行工作流。
+- **本地构建**：填入 `local.properties` 的 `amap.key`。
+
+> 包名务必是带 `.debug` 后缀的那个（debug 构建类型设置了 `applicationIdSuffix=".debug"`），填错会报 `INVALID_USER_SCODE`。签名固定在 `signing/debug.keystore`（公开调试证书，密码 `android`），所以本地与 CI 构建出的包 SHA1 一致，同一把 Key 两边通用。
+
 ## 云端构建 APK（无需本地安装任何工具）
 
 工程已包含 `.github/workflows/build-apk.yml`，用 GitHub Actions 自动构建：
@@ -74,7 +93,7 @@
 - 需要把 API Key 打进包里：在仓库 **Settings → Secrets and variables → Actions** 添加 `MEITUAN_LBS_KEY`（和可选的 `DEALS_BRIDGE_URL`、`AMAP_KEY`），再重新运行工作流。
 - 想用地图选点：添加 Secret `AMAP_KEY`（高德 Android Key）。不配也能构建，但选点页会提示未配置。
 - 没配置 Secrets 也能构建成功，但 App 启动时会提示「尚未配置官方 Key」并拒绝请求；这是刻意的合规拦截，不是构建失败。
-- debug APK 使用 Android 默认调试签名，可用于安装测试；正式分发需配置 release 签名后改用 `:app:assembleRelease`。
+- debug APK 使用仓库内固定的调试签名（`signing/debug.keystore`，SHA1 见上节），确保高德 Key 绑定长期有效；正式分发需配置 release 签名后改用 `:app:assembleRelease`。
 
 ## 快速开始
 
@@ -83,7 +102,7 @@
 3. 填写：
    - `meituan.lbs.key`：在美团地图开放平台申请 **Web服务API 类型 Key**。
    - `deals.bridge.url`：你的服务端地址（HTTPS），由服务端持有美团授权凭证调用官方优惠接口。留空则优惠列表为空，但商家检索正常。
-   - `amap.key`：在高德地图开放平台创建 Android 应用并添加 Key，用于「选择位置」地图选点。包名填 `com.example.nearbydiscount.debug`，SHA1 用 `keytool -list -v -keystore ~/.android/debug.keystore`（默认密码 `android`）查看。留空则选点功能不可用，GPS 检索正常。
+   - `amap.key`：在高德地图开放平台创建 Android 应用并添加 Key，用于「选择位置」地图选点。包名与 SHA1 用文末「申请高德 Key」一节的固定值即可。留空则选点功能不可用，GPS 检索正常。
    - 本地调试可临时设 `enable.demo.data=true`（仅 debug 包生效）以查看过滤效果。
 4. Android Studio 打开 `NearbyDiscount/` 目录，Sync + Run。
 5. 命令行：`./gradlew :app:assembleDebug`；单测：`./gradlew :app:testDebugUnitTest`。
