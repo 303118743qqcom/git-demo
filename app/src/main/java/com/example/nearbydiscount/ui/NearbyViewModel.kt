@@ -30,8 +30,11 @@ data class NearbyUiState(
     val statusText: String = "",
     val needPermission: Boolean = false,
     val blockedReason: String? = null,
-    val demoMode: Boolean = AppConfig.demoMode
+    val demoMode: Boolean = AppConfig.demoMode,
+    val locationSource: LocationSource = LocationSource.GPS
 )
+
+enum class LocationSource { GPS, PICKED }
 
 class NearbyViewModel(
     private val locationManager: AppLocationManager,
@@ -43,6 +46,7 @@ class NearbyViewModel(
 
     private var loadJob: Job? = null
     private var lastLocation: Pair<Double, Double>? = null
+    private var pickedLocation: Pair<Double, Double>? = null
 
     init {
         when (val check = ComplianceGuard.check(AppConfig.demoMode)) {
@@ -65,6 +69,24 @@ class NearbyViewModel(
 
     fun onRefresh() = reload()
 
+    /** 用户在地图上选点后回调：保存坐标并立即以该点检索，无需定位权限。 */
+    fun onLocationPicked(latitude: Double, longitude: Double) {
+        pickedLocation = latitude to longitude
+        _uiState.update { it.copy(locationSource = LocationSource.PICKED) }
+        reload()
+    }
+
+    /** 切回设备 GPS 定位重新检索。 */
+    fun onUseCurrentLocation() {
+        pickedLocation = null
+        lastLocation = null
+        _uiState.update { it.copy(locationSource = LocationSource.GPS) }
+        reload()
+    }
+
+    /** 当前用于检索的坐标，供地图选点页作为初始中心点。 */
+    fun currentCenter(): Pair<Double, Double>? = pickedLocation ?: lastLocation
+
     fun onPermissionResult(granted: Boolean) {
         if (granted) reload()
         else _uiState.update {
@@ -78,23 +100,28 @@ class NearbyViewModel(
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null, needPermission = false) }
 
-            val location = lastLocation ?: when (val result = locationManager.currentLocation()) {
-                is AppLocationManager.LocationResult.Success -> {
-                    result.latitude to result.longitude
-                }
-                AppLocationManager.LocationResult.PermissionDenied -> {
-                    _uiState.update {
-                        it.copy(isLoading = false, needPermission = true, statusText = "需要定位权限才能检索附近商家")
+            val source = _uiState.value.locationSource
+            val location = when {
+                source == LocationSource.PICKED && pickedLocation != null -> pickedLocation!!
+                lastLocation != null -> lastLocation!!
+                else -> when (val result = locationManager.currentLocation()) {
+                    is AppLocationManager.LocationResult.Success -> {
+                        result.latitude to result.longitude
                     }
-                    return@launch
-                }
-                AppLocationManager.LocationResult.Unavailable -> {
-                    _uiState.update { it.copy(isLoading = false, error = "设备定位不可用，请检查系统定位开关") }
-                    return@launch
-                }
-                AppLocationManager.LocationResult.Timeout -> {
-                    _uiState.update { it.copy(isLoading = false, error = "定位超时，请到开阔位置重试") }
-                    return@launch
+                    AppLocationManager.LocationResult.PermissionDenied -> {
+                        _uiState.update {
+                            it.copy(isLoading = false, needPermission = true, statusText = "需要定位权限才能检索附近商家")
+                        }
+                        return@launch
+                    }
+                    AppLocationManager.LocationResult.Unavailable -> {
+                        _uiState.update { it.copy(isLoading = false, error = "设备定位不可用，请检查系统定位开关") }
+                        return@launch
+                    }
+                    AppLocationManager.LocationResult.Timeout -> {
+                        _uiState.update { it.copy(isLoading = false, error = "定位超时，请到开阔位置重试") }
+                        return@launch
+                    }
                 }
             }
             lastLocation = location
@@ -102,10 +129,11 @@ class NearbyViewModel(
             val state = _uiState.value
             when (val result = interactor.load(location.first, location.second, state.radiusKm, state.keyword)) {
                 is AppResult.Success -> _uiState.update {
+                    val sourceLabel = if (it.locationSource == LocationSource.PICKED) "已选位置" else "已定位"
                     it.copy(
                         isLoading = false,
                         merchants = result.data,
-                        statusText = "已定位 · 检索半径 ${it.radiusKm} km · 共 ${result.data.size} 家"
+                        statusText = "$sourceLabel · 检索半径 ${it.radiusKm} km · 共 ${result.data.size} 家"
                     )
                 }
                 is AppResult.Failure -> _uiState.update {

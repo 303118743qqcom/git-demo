@@ -41,6 +41,7 @@ jobs:
           sdk.dir=/usr/local/lib/android/sdk
           meituan.lbs.key=${{ secrets.MEITUAN_LBS_KEY }}
           deals.bridge.url=${{ secrets.DEALS_BRIDGE_URL }}
+          amap.key=${{ secrets.AMAP_KEY }}
           enable.demo.data=false
           EOF
 

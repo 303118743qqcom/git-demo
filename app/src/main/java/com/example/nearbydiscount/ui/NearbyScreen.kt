@@ -56,7 +56,9 @@ fun NearbyScreen(
     onKeywordChange: (String) -> Unit,
     onSearch: () -> Unit,
     onRefresh: () -> Unit,
-    onRequestPermission: () -> Unit
+    onRequestPermission: () -> Unit,
+    onChooseLocation: () -> Unit,
+    onUseCurrentLocation: () -> Unit
 ) {
     Scaffold(
         containerColor = Color(0xFFF7F8FA),
@@ -104,11 +106,25 @@ fun NearbyScreen(
             }
 
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Text(
-                    text = state.statusText.ifBlank { stringResource(R.string.locating) },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF666666)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = state.statusText.ifBlank { stringResource(R.string.locating) },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF666666),
+                        modifier = Modifier.weight(1f)
+                    )
+                    TextButton(onClick = onChooseLocation) {
+                        Text(stringResource(R.string.choose_location), fontSize = 12.sp)
+                    }
+                    if (state.locationSource == LocationSource.PICKED) {
+                        TextButton(onClick = onUseCurrentLocation) {
+                            Text(stringResource(R.string.use_current_location), fontSize = 12.sp)
+                        }
+                    }
+                }
                 Spacer(Modifier.height(12.dp))
                 Text(stringResource(R.string.radius_label), fontWeight = FontWeight.Medium)
                 Spacer(Modifier.height(4.dp))
@@ -276,7 +292,9 @@ private fun NearbyScreenPreview() {
             onKeywordChange = {},
             onSearch = {},
             onRefresh = {},
-            onRequestPermission = {}
+            onRequestPermission = {},
+            onChooseLocation = {},
+            onUseCurrentLocation = {}
         )
     }
 }

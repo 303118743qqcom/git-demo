@@ -17,4 +17,15 @@
     <string name="distance_format">%1$s m</string>
     <string name="error_prefix">加载失败：%1$s</string>
     <string name="retry">重试</string>
+    <string name="choose_location">选择位置</string>
+    <string name="use_current_location">回到当前位置</string>
+    <string name="location_source_picked">已选位置</string>
+    <string name="location_source_gps">当前位置</string>
+    <string name="title_map_picker">选择位置</string>
+    <string name="map_key_missing">尚未配置高德地图 Key，无法使用地图选点</string>
+    <string name="map_drag_hint">拖动地图，中心标记处即为所选位置</string>
+    <string name="map_resolving_address">正在解析位置…</string>
+    <string name="map_confirm">确认并检索附近优惠</string>
+    <string name="map_marker_title">所选位置</string>
+    <string name="map_coord_only">位置：%.5f, %.5f</string>
 </resources>

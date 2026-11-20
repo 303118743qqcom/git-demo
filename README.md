@@ -14,6 +14,7 @@
 | 优惠有效期校验 | `domain/DiscountValidator.kt`：状态、启用标志、库存、开始/结束时间、ISO-8601 与秒/毫秒时间戳 |
 | 自动过滤过期优惠 / 剔除失效活动 | 同上；已过期、已下线、已售罄、无明确结束时间的活动不进入列表，并按 ID 去重 |
 | 有效优惠信息展示 | `ui/NearbyScreen.kt`：商家卡片展示折扣、标题与「有效期至」 |
+| 自己选位置 / 地图选点 | `MapPickerActivity.kt`：高德官方 SDK 地图，拖动取中心点 + 逆地理编码出地址；可一键切回 GPS |
 | 合规限制 | 见下节 |
 
 ## 合规限制（硬性边界）
@@ -38,7 +39,14 @@
 3. **抗抓包**：仅信任系统证书（不信任用户安装的 CA），可阻断常规代理证书 MITM。
 4. **环境校验**：`ComplianceGuard` 检测 root 与（正式包）调试器附加，不通过则拒绝发起任何请求。
 5. **密钥不入库**：Key 与桥接地址来自 `local.properties`，`.gitignore` 已排除；正式包不启用演示数据。
-6. **最小权限**：仅申请 INTERNET 与前台定位，不申请后台定位、存储、通讯录；`allowBackup=false`；R8 开启混淆。
+6. **最小权限**：仅申请 INTERNET、前台定位与网络状态（地图选点所需），不申请后台定位、存储、通讯录；`allowBackup=false`；R8 开启混淆。
+
+### 关于地图选点的合规边界
+
+「自己选位置」使用**高德地图官方 Android SDK**（`com.amap.api:3dmap-location-search`），通过 `mavenCentral()` 拉取固定版本，不抓包、不逆向、不访问任何非官方瓦片/数据。需说明两点：
+
+- 高德 SDK 使用**自己的网络栈**请求其官方域名，不受本工程 OkHttp 域名白名单拦截器的约束；但它同样是官方授权 SDK，且工程全局 `network_security_config` 仍强制 HTTPS、仅信任系统证书，可阻断常规代理抓包。
+- 未配置高德 Key 时，地图选点页会提示并安全退出，主界面 GPS 检索不受影响。
 
 ## 云端构建 APK（无需本地安装任何工具）
 
@@ -63,7 +71,8 @@
 
 常见问题：
 - 想重新构建：进入 Actions → `Build Android APK` → **Run workflow**。
-- 需要把 API Key 打进包里：在仓库 **Settings → Secrets and variables → Actions** 添加 `MEITUAN_LBS_KEY`（和可选的 `DEALS_BRIDGE_URL`），再重新运行工作流。
+- 需要把 API Key 打进包里：在仓库 **Settings → Secrets and variables → Actions** 添加 `MEITUAN_LBS_KEY`（和可选的 `DEALS_BRIDGE_URL`、`AMAP_KEY`），再重新运行工作流。
+- 想用地图选点：添加 Secret `AMAP_KEY`（高德 Android Key）。不配也能构建，但选点页会提示未配置。
 - 没配置 Secrets 也能构建成功，但 App 启动时会提示「尚未配置官方 Key」并拒绝请求；这是刻意的合规拦截，不是构建失败。
 - debug APK 使用 Android 默认调试签名，可用于安装测试；正式分发需配置 release 签名后改用 `:app:assembleRelease`。
 
@@ -74,6 +83,7 @@
 3. 填写：
    - `meituan.lbs.key`：在美团地图开放平台申请 **Web服务API 类型 Key**。
    - `deals.bridge.url`：你的服务端地址（HTTPS），由服务端持有美团授权凭证调用官方优惠接口。留空则优惠列表为空，但商家检索正常。
+   - `amap.key`：在高德地图开放平台创建 Android 应用并添加 Key，用于「选择位置」地图选点。包名填 `com.example.nearbydiscount.debug`，SHA1 用 `keytool -list -v -keystore ~/.android/debug.keystore`（默认密码 `android`）查看。留空则选点功能不可用，GPS 检索正常。
    - 本地调试可临时设 `enable.demo.data=true`（仅 debug 包生效）以查看过滤效果。
 4. Android Studio 打开 `NearbyDiscount/` 目录，Sync + Run。
 5. 命令行：`./gradlew :app:assembleDebug`；单测：`./gradlew :app:testDebugUnitTest`。

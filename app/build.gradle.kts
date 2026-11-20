@@ -27,10 +27,16 @@ android {
         // 密钥不写入版本库，只在本地构建时注入
         buildConfigField("String", "MEITUAN_LBS_KEY", "\"${secret("meituan.lbs.key")}\"")
         buildConfigField("String", "DEALS_BRIDGE_URL", "\"${secret("deals.bridge.url")}\"")
-        buildConfigField("boolean", "ENABLE_DEMO_DATA", secret("enable.demo.data").toBoolean())
+        buildConfigField("boolean", "ENABLE_DEMO_DATA", secret("enable.demo.data").toBoolean().toString())
+        buildConfigField("String", "AMAP_KEY", "\"${secret("amap.key")}\"")
         manifestPlaceholders["appName"] = "附近优惠"
+        manifestPlaceholders["amapKey"] = secret("amap.key")
 
         vectorDrawables { useSupportLibrary = true }
+
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
     }
 
     signingConfigs {
@@ -97,6 +103,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.kotlinx.serialization)
     implementation(libs.okhttp)
+    implementation("com.amap.api:3dmap-location-search:${libs.versions.amap.get()}")
     testImplementation(kotlin("test"))
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
