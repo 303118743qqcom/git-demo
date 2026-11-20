@@ -40,6 +40,15 @@ android {
     }
 
     signingConfigs {
+        // 固定 debug 签名：本地与 CI 共用，保证高德 Key 绑定的 SHA1 稳定不变。
+        // 这是公开的标准调试证书（密码 android），不含任何真实密钥。
+        getByName("debug") {
+            storeFile = rootProject.file("signing/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeType = "pkcs12"
+        }
         create("release") {
             val store = secret("release.keystore.file")
             if (store.isNotBlank()) {
@@ -55,6 +64,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             isDebuggable = true
+            signingConfig = signingConfigs.getByName("debug")
         }
         release {
             isMinifyEnabled = true
