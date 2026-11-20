@@ -112,7 +112,11 @@ class MapPickerActivity : ComponentActivity() {
                 )
             )
         }.onFailure {
-            addressText.text = getString(R.string.map_coord_only, latLng.latitude, latLng.longitude)
+            addressText.text = getString(
+                R.string.map_coord_only,
+                String.format("%.5f", latLng.latitude),
+                String.format("%.5f", latLng.longitude)
+            )
         }
     }
 

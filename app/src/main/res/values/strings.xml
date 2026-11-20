@@ -27,5 +27,5 @@
     <string name="map_resolving_address">正在解析位置…</string>
     <string name="map_confirm">确认并检索附近优惠</string>
     <string name="map_marker_title">所选位置</string>
-    <string name="map_coord_only">位置：%.5f, %.5f</string>
+    <string name="map_coord_only">位置：%1$s, %2$s</string>
 </resources>
