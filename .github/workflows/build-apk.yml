@@ -2,6 +2,11 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      demo:
+        description: '构建演示包（内置样本商家+优惠，无需任何 Key）'
+        type: boolean
+        default: false
   push:
     branches: [main, master]
   pull_request:
@@ -36,13 +41,17 @@ jobs:
           gradle-version: '8.9'
 
       - name: Generate local.properties
+        env:
+          DEMO_FLAG: ${{ inputs.demo }}
         run: |
+          if [ "$DEMO_FLAG" = "true" ]; then DEMO_VALUE=true; else DEMO_VALUE=false; fi
+          echo "enable.demo.data = $DEMO_VALUE"
           cat > local.properties <<EOF
           sdk.dir=/usr/local/lib/android/sdk
           meituan.lbs.key=${{ secrets.MEITUAN_LBS_KEY }}
           deals.bridge.url=${{ secrets.DEALS_BRIDGE_URL }}
           amap.key=${{ secrets.AMAP_KEY }}
-          enable.demo.data=false
+          enable.demo.data=$DEMO_VALUE
           EOF
 
       - name: Build debug APK
@@ -53,7 +62,9 @@ jobs:
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
+        env:
+          DEMO_FLAG: ${{ inputs.demo }}
         with:
-          name: nearby-discount-debug-apk
+          name: ${{ env.DEMO_FLAG == 'true' && 'nearby-demo-apk' || 'nearby-discount-debug-apk' }}
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error

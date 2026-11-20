@@ -56,8 +56,14 @@ class MainActivity : ComponentActivity() {
             val state by vm.uiState.collectAsStateWithLifecycle()
 
             LaunchedEffect(Unit) {
-                if (locationManager.hasPermission()) vm.onPermissionResult(true)
-                else permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                if (com.example.nearbydiscount.core.AppConfig.demoMode) {
+                    // 演示模式无需定位权限，直接加载内置样本数据。
+                    vm.onSearch()
+                } else if (locationManager.hasPermission()) {
+                    vm.onPermissionResult(true)
+                } else {
+                    permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                }
             }
 
             NearbyScreen(

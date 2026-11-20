@@ -36,6 +36,10 @@ data class NearbyUiState(
 
 enum class LocationSource { GPS, PICKED }
 
+/** 演示模式的固定中心点：北京国贸，保证无定位权限、无网络也能展示商家卡片。 */
+private const val DEMO_CENTER_LAT = 39.9087
+private const val DEMO_CENTER_LNG = 116.4602
+
 class NearbyViewModel(
     private val locationManager: AppLocationManager,
     private val interactor: NearbyInteractor
@@ -102,6 +106,8 @@ class NearbyViewModel(
 
             val source = _uiState.value.locationSource
             val location = when {
+                // 演示模式：固定北京国贸坐标，完全不依赖设备定位，任何设备都能看到效果。
+                AppConfig.demoMode -> DEMO_CENTER_LAT to DEMO_CENTER_LNG
                 source == LocationSource.PICKED && pickedLocation != null -> pickedLocation!!
                 lastLocation != null -> lastLocation!!
                 else -> when (val result = locationManager.currentLocation()) {
@@ -129,7 +135,11 @@ class NearbyViewModel(
             val state = _uiState.value
             when (val result = interactor.load(location.first, location.second, state.radiusKm, state.keyword)) {
                 is AppResult.Success -> _uiState.update {
-                    val sourceLabel = if (it.locationSource == LocationSource.PICKED) "已选位置" else "已定位"
+                    val sourceLabel = when {
+                        AppConfig.demoMode -> "演示位置"
+                        it.locationSource == LocationSource.PICKED -> "已选位置"
+                        else -> "已定位"
+                    }
                     it.copy(
                         isLoading = false,
                         merchants = result.data,
@@ -149,7 +159,7 @@ class NearbyViewModelFactory(private val context: Context) : ViewModelProvider.F
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val app = context.applicationContext
         val interactor = NearbyInteractor(
-            repository = NearbyRepository(ApiFactory.lbsApi()),
+            repository = NearbyRepository(ApiFactory.lbsApi(), demoMode = AppConfig.demoMode),
             promotionProvider = createPromotionProvider()
         )
         return NearbyViewModel(AppLocationManager(app), interactor) as T
