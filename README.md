@@ -37,9 +37,9 @@
 1. **域名白名单**：`HostAllowlistInterceptor` 只允许 `lbsapi.meituan.com` 与已配置的 HTTPS 桥接域名，杜绝请求任何非官方数据源。
 2. **禁止明文**：`network_security_config.xml` 设置 `cleartextTrafficPermitted="false"`。
 3. **抗抓包**：仅信任系统证书（不信任用户安装的 CA），可阻断常规代理证书 MITM。
-4. **环境校验**：`ComplianceGuard` 检测 root 与（正式包）调试器附加，不通过则拒绝发起任何请求。
+4. **环境校验**：`ComplianceGuard` 在正式包检测调试器附加与 root，不通过则拒绝发起任何请求；debug 包放宽这两项以便模拟器/已 root 测试机调试，但域名白名单、HTTPS 与官方 Key 校验在两种包中均生效。
 5. **密钥不入库**：Key 与桥接地址来自 `local.properties`，`.gitignore` 已排除；正式包不启用演示数据。
-6. **最小权限**：仅申请 INTERNET、前台定位与网络状态（地图选点所需），不申请后台定位、存储、通讯录；`allowBackup=false`；R8 开启混淆。
+6. **最小权限**：仅申请 INTERNET、前台定位与网络状态（地图选点所需），不申请后台定位、存储、通讯录；高德 SDK 合并时注入的 `android.permission.DUMP` 已在 Manifest 中显式移除；`allowBackup=false`；R8 开启混淆。
 
 ### 关于地图选点的合规边界
 

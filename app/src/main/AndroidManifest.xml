@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- 仅申请实现周边检索所必需的最小权限；不申请后台定位、通讯录、存储读写 -->
+    <!-- 高德 SDK 合并时注入的 DUMP 权限本应用不需要，显式移除以保持最小权限 -->
+    <uses-permission
+        android:name="android.permission.DUMP"
+        tools:node="remove" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
